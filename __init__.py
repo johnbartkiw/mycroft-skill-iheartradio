@@ -25,7 +25,7 @@ import vlc
 import requests
 import json
 
-# from vlc import Instance
+from .vlc import Instance
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.skills.core import intent_file_handler
 from mycroft.util.log import LOG
