@@ -11,7 +11,7 @@ Make internet radio streaming work with non-hard coded stations getting streams 
 * "Play 80s Metal radio (on|with|using) I Heart Radio"
 * "Play 70s Country internet radio (on|with|using) I Heart Radio"
 
-## Examples (Old Intent. May be deprecated after full testing of common play framework)
+## Examples (Old Intent. Will be deprecated after full testing of common play framework)
 * "Stream KEXP"
 * "Stream Jack FM Radio"
 * "Stream Jazz 24 internet radio"
