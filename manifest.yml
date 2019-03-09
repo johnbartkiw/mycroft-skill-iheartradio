@@ -2,4 +2,4 @@
 dependencies:
   python:
   system:
-  apt-get: libvlc
+  apt-get: vlc
