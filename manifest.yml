@@ -3,6 +3,5 @@ dependencies:
   python:
     - vlc
     - requests
-    - json
   system:
     all: vlc
