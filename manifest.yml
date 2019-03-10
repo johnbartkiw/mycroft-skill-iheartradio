@@ -1,5 +1,8 @@
 
 dependencies:
   python:
+    - vlc
+    - requests
+    - json
   system:
-  apt-get: vlc
+    all: vlc
