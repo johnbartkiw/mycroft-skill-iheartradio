@@ -4,4 +4,4 @@ dependencies:
     - vlc
     - requests
   system:
-    all: vlc
+    pkcon: vlc
