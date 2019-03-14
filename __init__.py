@@ -100,22 +100,26 @@ class IHeartRadioSkill(CommonPlaySkill):
         search_res = requests.get(search_url, params=payload, headers=headers)
         search_obj = json.loads(search_res.text)
 
-        self.station_name = search_obj["results"]["stations"][0]["name"]
-        self.station_id = search_obj["results"]["stations"][0]["id"]
-        LOG.debug("Station name: " + self.station_name + " ID: " + str(self.station_id))
+        if (len(search_obj["results"]["stations"]) > 0):
+            self.station_name = search_obj["results"]["stations"][0]["name"]
+            self.station_id = search_obj["results"]["stations"][0]["id"]
+            LOG.debug("Station name: " + self.station_name + " ID: " + str(self.station_id))
 
-        # query the station URL using the ID
-        station_res = requests.get(station_url+str(self.station_id))
-        station_obj = json.loads(station_res.text)
-        self.audio_state = "playing"
-        self.speak_dialog("now.playing", {"station": self.station_name} )
-        wait_while_speaking()
-        # Use the first stream URL
-        for x in list(station_obj["hits"][0]["streams"])[0:1]:
-            self.stream_url = station_obj["hits"][0]["streams"][x]
-            break
-        LOG.debug("Station URL: " + self.stream_url)
-        os.system("cvlc -I rc --network-caching=25000 --rc-host localhost:1251 "+self.stream_url)
+            # query the station URL using the ID
+            station_res = requests.get(station_url+str(self.station_id))
+            station_obj = json.loads(station_res.text)
+            self.audio_state = "playing"
+            self.speak_dialog("now.playing", {"station": self.station_name} )
+            wait_while_speaking()
+            # Use the first stream URL
+            for x in list(station_obj["hits"][0]["streams"])[0:1]:
+                self.stream_url = station_obj["hits"][0]["streams"][x]
+                break
+            LOG.debug("Station URL: " + self.stream_url)
+            os.system("cvlc -I rc --network-caching=10000 --rc-host localhost:1251 "+self.stream_url)
+        else:
+            self.speak_dialog("not.found")
+            wait_while_speaking()
 
     def stop(self):
         if self.audio_state == "playing":
