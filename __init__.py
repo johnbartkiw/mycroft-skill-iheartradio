@@ -21,11 +21,10 @@
 # SOFTWARE.
 
 import re
-import vlc
+import os
 import requests
 import json
 
-from .vlc import Instance
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.skills.core import intent_file_handler
 from mycroft.util.log import LOG
@@ -42,8 +41,6 @@ class IHeartRadioSkill(CommonPlaySkill):
     def __init__(self):
         super().__init__(name="IHeartRadioSkill")
         self.audio_state = "stopped"  # 'playing', 'stopped'
-        self.vlc_instance = Instance()
-        self.vlc_player = self.vlc_instance.media_player_new()
         self.station_name = None
         self.station_id = None
         self.stream_url = None
@@ -118,16 +115,11 @@ class IHeartRadioSkill(CommonPlaySkill):
             self.stream_url = station_obj["hits"][0]["streams"][x]
             break
         LOG.debug("Station URL: " + self.stream_url)
-
-        # start playing the stream
-        Media = self.vlc_instance.media_new(self.stream_url)
-        Media.get_mrl()
-        self.vlc_player.set_media(Media)
-        self.vlc_player.play()
+        os.system("cvlc -I rc --network-caching=25000 --rc-host localhost:1251 "+self.stream_url)
 
     def stop(self):
         if self.audio_state == "playing":
-            self.vlc_player.stop();
+            os.system("echo shutdown | nc localhost 1251")
             LOG.debug("Stopping stream")
         self.audio_state = "stopped"
         self.station_name = None
