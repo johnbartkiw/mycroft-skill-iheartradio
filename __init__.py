@@ -97,6 +97,7 @@ class IHeartRadioSkill(CommonPlaySkill):
         LOG.debug("Station data: " + message.data["station"])
 
     def find_station(self, search_term):
+        tracklist = []
         payload = { "keywords" : search_term, "maxRows" : 1, "bundle" : "false", "station" : "true", "artist" : "false", "track" : "false", "playlist" : "false", "podcast" : "false" }
         # get the response from the IHeartRadio API
         search_res = requests.get(search_url, params=payload, headers=headers)
@@ -118,7 +119,8 @@ class IHeartRadioSkill(CommonPlaySkill):
                 self.stream_url = station_obj["hits"][0]["streams"][x]
                 break
             LOG.debug("Station URL: " + self.stream_url)
-            self.mediaplayer.add_list(self.stream_url)
+            tracklist.append(self.stream_url)
+            self.mediaplayer.add_list(tracklist)
             self.mediaplayer.play()
         else:
             self.speak_dialog("not.found")
