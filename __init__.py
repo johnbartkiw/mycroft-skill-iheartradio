@@ -21,9 +21,10 @@
 # SOFTWARE.
 
 import re
-import os
 import requests
 import json
+
+from mycroft.audio.services.vlc import VlcService
 
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.skills.core import intent_file_handler
@@ -40,6 +41,7 @@ class IHeartRadioSkill(CommonPlaySkill):
 
     def __init__(self):
         super().__init__(name="IHeartRadioSkill")
+        self.mediaplayer = VlcService(config={'low_volume': 10, 'duck': True})
         self.audio_state = "stopped"  # 'playing', 'stopped'
         self.station_name = None
         self.station_id = None
@@ -116,20 +118,27 @@ class IHeartRadioSkill(CommonPlaySkill):
                 self.stream_url = station_obj["hits"][0]["streams"][x]
                 break
             LOG.debug("Station URL: " + self.stream_url)
-            os.system("cvlc -I rc --network-caching=10000 --rc-host localhost:1251 "+self.stream_url)
+            self.mediaplayer.add_list(self.stream_url)
+            self.mediaplayer.play()
         else:
             self.speak_dialog("not.found")
             wait_while_speaking()
 
     def stop(self):
         if self.audio_state == "playing":
-            os.system("echo shutdown | nc localhost 1251")
+            self.mediaplayer.stop()
+            self.mediaplayer.clear_list()
             LOG.debug("Stopping stream")
         self.audio_state = "stopped"
         self.station_name = None
         self.station_id = None
         self.stream_url = None
         return True
+
+    def shutdown(self):
+        if self.audio_state == 'playing':
+            self.mediaplayer.stop()
+            self.mediaplayer.clear_list()
 
     # Get the correct localized regex
     def translate_regex(self, regex):

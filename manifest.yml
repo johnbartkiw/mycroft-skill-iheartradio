@@ -1,6 +1,0 @@
-
-dependencies:
-  python:
-    - requests
-  system:
-    all: vlc
