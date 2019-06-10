@@ -1,0 +1,10 @@
+name: i Heart Radio
+skillMetadata:
+  sections:
+    - name: Country
+      fields:
+        - name: country
+          type: select
+          label: Change location for search results
+          options: Default (use device location)|default;Global|global;Australia|au;New Zealand|nz
+          value: default

@@ -46,20 +46,26 @@ class IHeartRadioSkill(CommonPlaySkill):
         self.stream_url = None
         self.regexes = {}
         self.set_urls()
-        country_code = self.location['city']['state']['country']['code'].lower()
-        if self.test_for_local_api(country_code):
-            self.set_urls(country_code)
+        self.settings.set_changed_callback(self.set_urls)
 
-    def set_urls(self, country_code=''):
-        if country_code and country_code[-1] != '.':
+    def set_urls(self):
+        country = self.settings.get('country', 'default')
+        country_code = self.location['city']['state']['country']['code'].lower() if country == 'default' else country
+        if country_code[-1] != '.':
             country_code = country_code + '.'
+        if country == 'global' or not self.test_for_local_api(country_code):
+            country_code = ''
         self.search_url = "http://{}api.iheart.com/api/v3/search/all".format(country_code)
         self.station_url = "https://{}api.iheart.com/api/v2/content/liveStations/".format(country_code)
 
     def test_for_local_api(self, country_code):
-        payload = { "keywords" : "test", "maxRows" : 1, "bundle" : "false", "station" : "true", "artist" : "false", "track" : "false", "playlist" : "false", "podcast" : "false" }
-        r = requests.get(self.search_url, params=payload, headers=headers)
-        return r.status_code == 200
+        try:
+            payload = { "keywords" : "test", "maxRows" : 1, "bundle" : "false", "station" : "true", "artist" : "false", "track" : "false", "playlist" : "false", "podcast" : "false" }
+            search_url = "http://{}api.iheart.com/api/v3/search/all".format(country_code)
+            r = requests.get(search_url, params=payload, headers=headers)
+            return r.status_code == 200
+        except:
+            return False
 
     def CPS_match_query_phrase(self, phrase):
         # Look for regex matches starting from the most specific to the least
