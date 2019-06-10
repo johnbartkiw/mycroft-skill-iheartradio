@@ -33,8 +33,6 @@ from mycroft.util.log import LOG
 from mycroft.audio import wait_while_speaking
 
 # Static values for tunein search requests
-search_url = "http://au.api.iheart.com/api/v3/search/all"
-station_url = "https://au.api.iheart.com/api/v2/content/liveStations/"
 headers = {}
 
 class IHeartRadioSkill(CommonPlaySkill):
@@ -47,6 +45,21 @@ class IHeartRadioSkill(CommonPlaySkill):
         self.station_id = None
         self.stream_url = None
         self.regexes = {}
+        self.set_urls()
+        country_code = self.location['city']['state']['country']['code'].lower()
+        if self.test_for_local_api(country_code):
+            self.set_urls(country_code)
+
+    def set_urls(self, country_code=''):
+        if country_code and country_code[-1] != '.':
+            country_code = country_code + '.'
+        self.search_url = "http://{}api.iheart.com/api/v3/search/all".format(country_code)
+        self.station_url = "https://{}api.iheart.com/api/v2/content/liveStations/".format(country_code)
+
+    def test_for_local_api(self, country_code):
+        payload = { "keywords" : "test", "maxRows" : 1, "bundle" : "false", "station" : "true", "artist" : "false", "track" : "false", "playlist" : "false", "podcast" : "false" }
+        r = requests.get(self.search_url, params=payload, headers=headers)
+        return r.status_code == 200
 
     def CPS_match_query_phrase(self, phrase):
         # Look for regex matches starting from the most specific to the least
@@ -93,8 +106,7 @@ class IHeartRadioSkill(CommonPlaySkill):
 
     @intent_file_handler('StreamRequest.intent')
     def handle_stream_intent(self, message):
-        search_term = 'triplej' if (message.data["station"] == 'triple j') \
-            else message.data["station"]
+        search_term = 'triplej' if (message.data["station"] == 'triple j') else message.data["station"]
         self.find_station(search_term)
         LOG.debug("Station data: " + message.data["station"])
 
@@ -102,7 +114,7 @@ class IHeartRadioSkill(CommonPlaySkill):
         tracklist = []
         payload = { "keywords" : search_term, "maxRows" : 1, "bundle" : "false", "station" : "true", "artist" : "false", "track" : "false", "playlist" : "false", "podcast" : "false" }
         # get the response from the IHeartRadio API
-        search_res = requests.get(search_url, params=payload, headers=headers)
+        search_res = requests.get(self.search_url, params=payload, headers=headers)
         search_obj = json.loads(search_res.text)
 
         if (len(search_obj["results"]["stations"]) > 0):
@@ -111,7 +123,7 @@ class IHeartRadioSkill(CommonPlaySkill):
             LOG.debug("Station name: " + self.station_name + " ID: " + str(self.station_id))
 
             # query the station URL using the ID
-            station_res = requests.get(station_url+str(self.station_id))
+            station_res = requests.get(self.station_url+str(self.station_id))
             station_obj = json.loads(station_res.text)
             self.audio_state = "playing"
             self.speak_dialog("now.playing", {"station": self.station_name} )
