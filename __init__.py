@@ -33,8 +33,8 @@ from mycroft.util.log import LOG
 from mycroft.audio import wait_while_speaking
 
 # Static values for tunein search requests
-search_url = "http://api.iheart.com/api/v3/search/all"
-station_url = "https://api.iheart.com/api/v2/content/liveStations/"
+search_url = "http://au.api.iheart.com/api/v3/search/all"
+station_url = "https://au.api.iheart.com/api/v2/content/liveStations/"
 headers = {}
 
 class IHeartRadioSkill(CommonPlaySkill):
@@ -93,7 +93,9 @@ class IHeartRadioSkill(CommonPlaySkill):
 
     @intent_file_handler('StreamRequest.intent')
     def handle_stream_intent(self, message):
-        self.find_station(message.data["station"])
+        search_term = 'triplej' if (message.data["station"] == 'triple j') \
+            else message.data["station"]
+        self.find_station(search_term)
         LOG.debug("Station data: " + message.data["station"])
 
     def find_station(self, search_term):
