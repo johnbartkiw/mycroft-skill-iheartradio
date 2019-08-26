@@ -112,8 +112,7 @@ class IHeartRadioSkill(CommonPlaySkill):
 
     @intent_file_handler('StreamRequest.intent')
     def handle_stream_intent(self, message):
-        search_term = 'triplej' if (message.data["station"] == 'triple j') else message.data["station"]
-        self.find_station(search_term)
+        self.find_station(message.data["station"])
         LOG.debug("Station data: " + message.data["station"])
 
     def find_station(self, search_term):
