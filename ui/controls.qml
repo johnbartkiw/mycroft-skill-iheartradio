@@ -1,0 +1,72 @@
+import QtQuick.Layouts 1.4
+import QtQuick 2.4
+import QtQuick.Controls 2.0
+import org.kde.kirigami 2.4 as Kirigami
+
+import Mycroft 1.0 as Mycroft
+
+
+Mycroft.Delegate {
+    id: root
+    property var album_img: sessionData.image
+    ColumnLayout {
+        spacing: 2
+        anchors.centerIn: parent
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignHCenter
+
+
+        Image {
+            Layout.alignment: Qt.AlignHCenter
+            id: img
+            source: Qt.resolvedUrl(sessionData.logoURL)
+            Layout.preferredWidth: 300
+            Layout.preferredHeight: 350
+            fillMode: Image.PreserveAspectFit
+        }
+        Kirigami.Label {
+            id: artist
+            Layout.alignment: Qt.AlignHCenter
+            Layout.fillWidth: true
+            Layout.preferredHeight: 50
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            elide: Text.ElideRight
+            font.family: "Noto Sans"
+            font.bold: true
+            font.weight: Font.Bold
+            font.pixelSize: 30
+            text: sessionData.description
+        }
+        Mycroft.AutoFitLabel {
+            id: track
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredHeight: 150
+            Layout.preferredWidth:parent.width
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            elide: Text.ElideRight
+            font.family: "Noto Sans"
+            color: "#22a7f0"
+            font.pixelSize: 30
+            rightPadding: -font.pixelSize * 0.1
+            text: sessionData.track
+        }
+        RowLayout {
+            id: grid
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
+
+            Image {
+                height: 200
+                source: Qt.resolvedUrl(sessionData.playPauseImage)
+                opacity: apause.pressed ? 0.5 : 1.0
+                MouseArea {
+                    id: apause
+                    anchors.fill: parent
+                    onClicked: triggerGuiEvent("skill.pause.event", {"click": "CLICK"})
+                }
+            }
+        }
+    }
+}

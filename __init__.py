@@ -48,6 +48,24 @@ class IHeartRadioSkill(CommonPlaySkill):
         self.set_urls()
         self.settings.set_changed_callback(self.set_urls)
 
+    def initialize(self):
+        self.gui.register_handler('skill.pause.event', self.handle_pause_event)
+
+    def handle_pause_event(self, message):
+        if self.audio_state == "playing":
+            LOG.info("Pause clicked")
+            self.gui["playPauseImage"] = "play.svg"
+            self.stop()
+        else:
+            LOG.info("Play clicked")
+            self.gui["playPauseImage"] = "pause.svg"
+            self.audio_state = "playing"
+            self.stream_url = self.gui["streamURL"]
+            tracklist = []
+            tracklist.append(self.stream_url)
+            self.mediaplayer.add_list(tracklist)
+            self.mediaplayer.play()
+
     def set_urls(self):
         country = self.settings.get('country', 'default')
         country_code = self.location['city']['state']['country']['code'].lower() if country == 'default' else country
@@ -138,6 +156,13 @@ class IHeartRadioSkill(CommonPlaySkill):
                 self.stream_url = station_obj["hits"][0]["streams"][x]
                 break
             LOG.debug("Station URL: " + self.stream_url)
+
+            self.gui["streamURL"] = self.stream_url
+            self.gui["logoURL"] = station_obj["hits"][0]["logo"]
+            self.gui["description"] = station_obj["hits"][0]["description"]
+            self.gui["playPauseImage"] = "pause.svg"
+            self.gui.show_page("controls.qml", override_idle=True)
+
             tracklist.append(self.stream_url)
             self.mediaplayer.add_list(tracklist)
             self.mediaplayer.play()
