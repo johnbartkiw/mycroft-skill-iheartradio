@@ -15,42 +15,88 @@ Mycroft.Delegate {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignHCenter
 
-
-        Image {
-            Layout.alignment: Qt.AlignHCenter
-            id: img
-            source: Qt.resolvedUrl(sessionData.logoURL)
-            Layout.preferredWidth: 300
-            Layout.preferredHeight: 350
-            fillMode: Image.PreserveAspectFit
-        }
-        Kirigami.Label {
-            id: artist
-            Layout.alignment: Qt.AlignHCenter
+        RowLayout {
+            id: stationGrid
             Layout.fillWidth: true
-            Layout.preferredHeight: 50
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.WordWrap
-            elide: Text.ElideRight
-            font.family: "Noto Sans"
-            font.bold: true
-            font.weight: Font.Bold
-            font.pixelSize: 30
-            text: sessionData.description
+            Image {
+                Layout.alignment: Qt.AlignHCenter
+                id: img
+                source: Qt.resolvedUrl(sessionData.logoURL)
+                Layout.preferredWidth: 300
+                Layout.preferredHeight: 350
+                fillMode: Image.PreserveAspectFit
+            }
+            Kirigami.Label {
+                id: description
+                Layout.alignment: Qt.AlignHCenter
+                Layout.fillWidth: true
+                Layout.preferredHeight: 50
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                elide: Text.ElideRight
+                font.family: "Noto Sans"
+                font.bold: true
+                font.weight: Font.Bold
+                font.pixelSize: 30
+                text: sessionData.description
+            }
         }
-        Mycroft.AutoFitLabel {
-            id: track
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredHeight: 150
-            Layout.preferredWidth:parent.width
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.WordWrap
-            elide: Text.ElideRight
-            font.family: "Noto Sans"
-            color: "#22a7f0"
-            font.pixelSize: 30
-            rightPadding: -font.pixelSize * 0.1
-            text: sessionData.track
+        RowLayout {
+            id: trackGrid
+            Layout.fillWidth: true
+            Image {
+                Layout.alignment: Qt.AlignHCenter
+                id: trackimg
+                source: Qt.resolvedUrl(sessionData.currentTrackImg)
+                Layout.preferredWidth: 200
+                Layout.preferredHeight: 200
+                fillMode: Image.PreserveAspectFit
+            }
+            ColumnLayout {
+                spacing: 1
+                Layout.alignment: Qt.AlignHCenter
+
+                Kirigami.Label {
+                    id: currentTrackTitle
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 50
+                    horizontalAlignment: Text.AlignHLeft
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideRight
+                    font.family: "Noto Sans"
+                    font.bold: true
+                    font.weight: Font.Bold
+                    font.pixelSize: 25
+                    text: sessionData.title
+                }
+                Kirigami.Label {
+                    id: currentTrackArtist
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 40
+                    horizontalAlignment: Text.AlignHLeft
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideRight
+                    font.family: "Noto Sans"
+                    font.bold: false
+                    font.pixelSize: 20
+                    text: sessionData.artist
+                }
+                Kirigami.Label {
+                    id: currentTrackAlbum
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 40
+                    horizontalAlignment: Text.AlignHLeft
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideRight
+                    font.family: "Noto Sans"
+                    font.bold: false
+                    font.pixelSize: 20
+                    text: sessionData.album
+                }
+            }
         }
         RowLayout {
             id: grid
@@ -69,4 +115,9 @@ Mycroft.Delegate {
             }
         }
     }
+    Timer {
+        interval: 10000; running: true; repeat: true
+        onTriggered: triggerGuiEvent("skill.timer.event", {"click": "CLICK"})
+    }
+    
 }
