@@ -45,8 +45,10 @@ class IHeartRadioSkill(CommonPlaySkill):
         self.station_id = None
         self.stream_url = None
         self.regexes = {}
+
+    def initialize(self):
+        self.settings_change_callback = self.set_urls
         self.set_urls()
-        self.settings.set_changed_callback(self.set_urls)
 
     def set_urls(self):
         country = self.settings.get('country', 'default')
