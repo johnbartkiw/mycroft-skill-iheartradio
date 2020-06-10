@@ -48,6 +48,25 @@ class IHeartRadioSkill(CommonPlaySkill):
         self.set_urls()
         self.settings.set_changed_callback(self.set_urls)
 
+    def initialize(self):
+        self.gui.register_handler('skill.pause.event', self.handle_pause_event)
+        self.gui.register_handler('skill.timer.event', self.setCurrentTrack)
+
+    def handle_pause_event(self, message):
+        if self.audio_state == "playing":
+            LOG.info("Pause clicked")
+            self.gui["playPauseImage"] = "play.svg"
+            self.stop()
+        else:
+            LOG.info("Play clicked")
+            self.gui["playPauseImage"] = "pause.svg"
+            self.audio_state = "playing"
+            self.stream_url = self.gui["streamURL"]
+            tracklist = []
+            tracklist.append(self.stream_url)
+            self.mediaplayer.add_list(tracklist)
+            self.mediaplayer.play()
+
     def set_urls(self):
         country = self.settings.get('country', 'default')
         country_code = self.location['city']['state']['country']['code'].lower() if country == 'default' else country
@@ -57,6 +76,7 @@ class IHeartRadioSkill(CommonPlaySkill):
             country_code = ''
         self.search_url = "http://{}api.iheart.com/api/v3/search/all".format(country_code)
         self.station_url = "https://{}api.iheart.com/api/v2/content/liveStations/".format(country_code)
+        self.currentTrack_url = "https://{}api.iheart.com/api/v3/live-meta/stream/".format(country_code)
 
     def test_for_local_api(self, country_code):
         try:
@@ -138,12 +158,33 @@ class IHeartRadioSkill(CommonPlaySkill):
                 self.stream_url = station_obj["hits"][0]["streams"][x]
                 break
             LOG.debug("Station URL: " + self.stream_url)
+
+            self.gui["streamURL"] = self.stream_url
+            self.gui["logoURL"] = station_obj["hits"][0]["logo"]
+            self.gui["description"] = station_obj["hits"][0]["description"]
+            self.gui["playPauseImage"] = "pause.svg"
+            self.setCurrentTrack("")
+            self.gui.show_page("controls.qml", override_idle=True)
+
             tracklist.append(self.stream_url)
             self.mediaplayer.add_list(tracklist)
             self.mediaplayer.play()
         else:
             self.speak_dialog("not.found")
             wait_while_speaking()
+
+    def setCurrentTrack(self,message):
+        currentTrack_res = requests.get(self.currentTrack_url+str(self.station_id)+"/currentTrackMeta")
+        LOG.info("Response: "+str(currentTrack_res.status_code))
+        if currentTrack_res.status_code == 200:
+            currentTrack_obj = json.loads(currentTrack_res.text)
+            self.gui["artist"] = "Artist: "+currentTrack_obj["artist"]
+            self.gui["album"] = "Album: "+currentTrack_obj["album"]
+            self.gui["title"] = currentTrack_obj["title"]
+            if "imagePath" in currentTrack_obj:
+                self.gui["currentTrackImg"] = currentTrack_obj["imagePath"]
+            else:
+                self.gui["currentTrackImg"] = self.gui["logoURL"]
 
     def stop(self):
         if self.audio_state == "playing":
