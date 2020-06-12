@@ -48,13 +48,14 @@ class IHeartRadioSkill(CommonPlaySkill):
         self.regexes = {}
         self.set_urls()
         self.mute_commercials = False
-        self.settings_changed_callback = self.set_urls
 
     def initialize(self):
         self.gui.register_handler('skill.pause.event', self.handle_pause_event)
         self.gui.register_handler('skill.timer.event', self.setCurrentTrack)
         self.gui.register_handler('skill.mute.event', self.handle_mute_event)
         self.gui.register_handler('skill.volume.event', self.handle_volume_event)
+        self.settings_change_callback = self.set_urls
+        self.set_urls()
 
     def handle_pause_event(self, message):
         if self.audio_state == "playing":
