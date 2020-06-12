@@ -168,6 +168,7 @@ class IHeartRadioSkill(CommonPlaySkill):
             # query the station URL using the ID
             station_res = requests.get(self.station_url+str(self.station_id))
             station_obj = json.loads(station_res.text)
+            LOG.debug("Logo Url: "+station_obj["hits"][0]["logo"])
             self.audio_state = "playing"
             self.gui["audio_state"] = "playing"
             self.speak_dialog("now.playing", {"station": self.station_name} )

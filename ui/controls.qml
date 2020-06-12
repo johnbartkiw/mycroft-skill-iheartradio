@@ -18,6 +18,7 @@ Mycroft.Delegate {
         } else {
             refreshTimer.start()
         }
+        triggerGuiEvent("skill.pause.event", {"click": "CLICK"})
     }
 
     RowLayout {
@@ -73,11 +74,9 @@ Mycroft.Delegate {
                     width: parent.height
                     source: Qt.resolvedUrl(sessionData.playPauseImage)
                     MouseArea {
+                        anchors.fill: parent
                         id: apause
-                        onClicked: {
-                            handlePlayPauseTimer()
-                            triggerGuiEvent("skill.pause.event", {"click": "CLICK"})
-                        }
+                        onClicked: { handlePlayPauseTimer() }
                     }
                 }
                 Rectangle {
