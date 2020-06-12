@@ -46,7 +46,6 @@ class IHeartRadioSkill(CommonPlaySkill):
         self.station_id = None
         self.stream_url = None
         self.regexes = {}
-        self.set_urls()
         self.mute_commercials = False
 
     def initialize(self):
