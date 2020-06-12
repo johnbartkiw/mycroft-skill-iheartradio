@@ -29,6 +29,7 @@ from mycroft.audio.services.vlc import VlcService
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.skills.core import intent_file_handler
 from mycroft.util.log import LOG
+from mycroft.messagebus.message import Message
 
 from mycroft.audio import wait_while_speaking
 
@@ -46,26 +47,43 @@ class IHeartRadioSkill(CommonPlaySkill):
         self.stream_url = None
         self.regexes = {}
         self.set_urls()
-        self.settings.set_changed_callback(self.set_urls)
+        self.mute_commercials = False
+        self.settings_changed_callback = self.set_urls
 
     def initialize(self):
         self.gui.register_handler('skill.pause.event', self.handle_pause_event)
         self.gui.register_handler('skill.timer.event', self.setCurrentTrack)
+        self.gui.register_handler('skill.mute.event', self.handle_mute_event)
+        self.gui.register_handler('skill.volume.event', self.handle_volume_event)
 
     def handle_pause_event(self, message):
         if self.audio_state == "playing":
-            LOG.info("Pause clicked")
+            LOG.debug("Pause clicked")
             self.gui["playPauseImage"] = "play.svg"
+            self.gui["audio_state"] = "stopped" # needed for gui Timer
             self.stop()
         else:
-            LOG.info("Play clicked")
+            LOG.debug("Play clicked")
             self.gui["playPauseImage"] = "pause.svg"
             self.audio_state = "playing"
-            self.stream_url = self.gui["streamURL"]
+            self.gui["audio_state"] = "playing" # needed for gui Timer
+            self.stream_url = self.gui["streamURL"] # Restore these variables
+            self.station_id = self.gui["stationID"]
             tracklist = []
             tracklist.append(self.stream_url)
             self.mediaplayer.add_list(tracklist)
             self.mediaplayer.play()
+
+    def handle_mute_event(self, message):
+        muteState = message.data["state"]
+        LOG.info("in mute event: "+str(muteState))
+        self.mute_commercials = muteState
+
+    # Volume can be done via voice or by the slider on the UI
+    def handle_volume_event(self, message):
+        level = message.data["level"]
+        LOG.debug("in volume event: "+str(level))
+        self.bus.emit(Message("mycroft.volume.set", data={"percent": level/10 })) # Needs value between 0.0 and 1.0
 
     def set_urls(self):
         country = self.settings.get('country', 'default')
@@ -151,6 +169,7 @@ class IHeartRadioSkill(CommonPlaySkill):
             station_res = requests.get(self.station_url+str(self.station_id))
             station_obj = json.loads(station_res.text)
             self.audio_state = "playing"
+            self.gui["audio_state"] = "playing"
             self.speak_dialog("now.playing", {"station": self.station_name} )
             wait_while_speaking()
             # Use the first stream URL
@@ -160,6 +179,7 @@ class IHeartRadioSkill(CommonPlaySkill):
             LOG.debug("Station URL: " + self.stream_url)
 
             self.gui["streamURL"] = self.stream_url
+            self.gui["stationID"] = self.station_id
             self.gui["logoURL"] = station_obj["hits"][0]["logo"]
             self.gui["description"] = station_obj["hits"][0]["description"]
             self.gui["playPauseImage"] = "pause.svg"
@@ -175,16 +195,52 @@ class IHeartRadioSkill(CommonPlaySkill):
 
     def setCurrentTrack(self,message):
         currentTrack_res = requests.get(self.currentTrack_url+str(self.station_id)+"/currentTrackMeta")
-        LOG.info("Response: "+str(currentTrack_res.status_code))
+        LOG.debug("Current Track Response: "+str(currentTrack_res.status_code))
+        if currentTrack_res.status_code == 204 and self.mute_commercials:
+            self.mediaplayer.pause() # Pause until a song is put back on the Currently Playing list
         if currentTrack_res.status_code == 200:
+            self.mediaplayer.resume() # Just in case we are paused...
             currentTrack_obj = json.loads(currentTrack_res.text)
+            self.gui["title"] = currentTrack_obj["title"]
             self.gui["artist"] = "Artist: "+currentTrack_obj["artist"]
             self.gui["album"] = "Album: "+currentTrack_obj["album"]
-            self.gui["title"] = currentTrack_obj["title"]
             if "imagePath" in currentTrack_obj:
                 self.gui["currentTrackImg"] = currentTrack_obj["imagePath"]
             else:
                 self.gui["currentTrackImg"] = self.gui["logoURL"]
+
+        # Load the previous three songs
+        trackHistory_res = requests.get(self.currentTrack_url+str(self.station_id)+"/trackHistory?limit=3")
+        LOG.debug("Track History Response: "+str(trackHistory_res.status_code))
+        if trackHistory_res.status_code == 200:
+            trackHistory_obj = json.loads(trackHistory_res.text)
+            # Setup previous 1
+            self.gui["previous1Title"] = trackHistory_obj["data"][0]["title"]
+            self.gui["previous1Artist"] = "Artist: "+trackHistory_obj["data"][0]["artist"]
+            self.gui["previous1Album"] = "Artist: "+trackHistory_obj["data"][0]["album"]
+            if "imagePath" in trackHistory_obj["data"][0]:
+                self.gui["previous1Img"] = trackHistory_obj["data"][0]["imagePath"]
+            else:
+                self.gui["previous1Img"] = self.gui["logoURL"]
+
+            # Setup previous 2
+            self.gui["previous2Title"] = trackHistory_obj["data"][1]["title"]
+            self.gui["previous2Artist"] = "Artist: "+trackHistory_obj["data"][1]["artist"]
+            self.gui["previous2Album"] = "Artist: "+trackHistory_obj["data"][1]["album"]
+            if "imagePath" in trackHistory_obj["data"][1]:
+                self.gui["previous2Img"] = trackHistory_obj["data"][1]["imagePath"]
+            else:
+                self.gui["previous2Img"] = self.gui["logoURL"]
+
+            # Setup previous 3
+            self.gui["previous3Title"] = trackHistory_obj["data"][2]["title"]
+            self.gui["previous3Artist"] = "Artist: "+trackHistory_obj["data"][2]["artist"]
+            self.gui["previous3Album"] = "Artist: "+trackHistory_obj["data"][2]["album"]
+            if "imagePath" in trackHistory_obj["data"][2]:
+                self.gui["previous3Img"] = trackHistory_obj["data"][2]["imagePath"]
+            else:
+                self.gui["previous3Img"] = self.gui["logoURL"]
+
 
     def stop(self):
         if self.audio_state == "playing":
